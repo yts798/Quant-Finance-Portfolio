@@ -25,6 +25,11 @@ class BaseInstrument(ABC):
     Every derivative should inherit from this.
     """
 
+    # Common fields — subclasses inherit these defaults (override as needed)
+    currency: str = "USD"
+    notional: float = 1.0
+    # You can add more later: e.g. trade_date: date = field(default_factory=date.today)
+
     @abstractmethod
     def payoff(self, spot: float) -> float:
         """
@@ -43,13 +48,30 @@ class BaseInstrument(ABC):
         pass
 
     # ────────────────────────────────────────────────
-    # Removed abstract @property expiry
+    # Conventional helpers (not abstract — safe to call on any instance)
     # ────────────────────────────────────────────────
-    # Now expiry is just a conventional field that concrete classes should provide.
-    # This avoids instantiation errors while keeping the base clean.
-    # You can still document it or add a type hint in subclasses if desired.
+
+    def expiry(self) -> Optional[date]:
+        """Safe accessor for expiry date if the subclass defines it."""
+        return getattr(self, 'expiry', None)
+
+    def requires_simulation(self) -> bool:
+        """Alias for is_path_dependent() — clearer intent for pricing engines."""
+        return self.is_path_dependent()
+
+    def describe(self) -> str:
+        """Human-readable summary — great for debugging / logging."""
+        exp = self.expiry()
+        exp_str = exp.isoformat() if exp else 'N/A'
+        return (
+            f"{self.__class__.__name__}("
+            f"expiry={exp_str}, "
+            f"currency={self.currency}, "
+            f"notional={self.notional:.2f}"
+            f")"
+        )
 
     def __repr__(self) -> str:
-        # Safe repr even if subclass doesn't have expiry
-        expiry_str = getattr(self, 'expiry', 'N/A')
-        return f"{self.__class__.__name__}(expiry={expiry_str})"
+        # Keep your safe repr, but now we can lean on describe() if wanted
+        exp_str = self.expiry().isoformat() if self.expiry() else 'N/A'
+        return f"{self.__class__.__name__}(expiry={exp_str})"
