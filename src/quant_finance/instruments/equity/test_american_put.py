@@ -52,7 +52,7 @@ def test():
     print(f"  Spot 4300 → {put.payoff(4300):.2f}   (ITM)")
     print(f"  Spot 4400 → {put.payoff(4400):.2f}   (ATM)")
     print(f"  Spot 4500 → {put.payoff(4500):.2f}   (OTM)\n")
-
+    print(1)
 
 if __name__ == "__main__":
     test()
