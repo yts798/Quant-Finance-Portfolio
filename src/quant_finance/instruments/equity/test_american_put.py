@@ -40,7 +40,7 @@ def test():
     put = AmericanPut(
         strike=4400.0,
         expiry=tomorrow,
-    )
+    ) 
 
     print("Created:")
     print(" ", put)
