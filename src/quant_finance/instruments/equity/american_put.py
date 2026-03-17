@@ -1,3 +1,5 @@
+# src/quant_finance/instruments/equity/american_put.py
+
 from dataclasses import dataclass
 from datetime import date
 
@@ -9,12 +11,11 @@ from ...core.asset_class import AssetClass
 class AmericanPut(BaseInstrument):
     """American put option – early exercise possible."""
 
-    asset_class: AssetClass = AssetClass.EQUITY
-
     strike: float
     expiry: date
     underlying_ticker: str = "SPX"
     dividend_yield: float = 0.0
+    asset_class: AssetClass = AssetClass.EQUITY     # ← moved to last position
 
     def __post_init__(self) -> None:
         if self.strike <= 0:
