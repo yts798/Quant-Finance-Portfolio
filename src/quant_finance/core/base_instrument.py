@@ -3,10 +3,23 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
+from enum import Enum, auto
+# from .asset_class import AssetClass   # ← new import
 
-from .asset_class import AssetClass   # ← new import
 
+class AssetClass(Enum):
+    """Mutually exclusive top-level asset classes."""
 
+    EQUITY      = auto()   # stocks, indices, single-name equity derivatives
+    RATES       = auto()   # interest rates, bonds, swaps, swaptions, ...
+    FX          = auto()   # foreign exchange spots, forwards, FX options
+    CREDIT      = auto()   # CDS, defaultable bonds, credit indices
+    COMMODITY   = auto()   # futures/options on oil, gold, ags, metals, ...
+    INFLATION   = auto()   # inflation-linked bonds, YoY/II swaps
+    HYBRID      = auto()   # convertibles, equity+rates hybrids, quantos, ...
+
+    def __str__(self) -> str:
+        return self.name.lower()
 @dataclass
 class MarketDataSnapshot:
     """Simple market data snapshot at pricing time"""

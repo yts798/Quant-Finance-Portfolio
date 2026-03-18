@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling >=1.10.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "quant-finance-portfolio"
+version = "0.1.0"
+description = "Yutong's quant finance library"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "Yutong", email = "your@email.com"}]
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/quant_finance"]
+artifacts = ["src/quant_finance/**/*.py"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/README.md", "/pyproject.toml"]
+exclude = ["/tests", "/notebooks", "/docs"]
