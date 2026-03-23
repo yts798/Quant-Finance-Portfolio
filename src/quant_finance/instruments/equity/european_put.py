@@ -1,3 +1,5 @@
+# src/quant_finance/instruments/equity/european_put.py
+
 from dataclasses import dataclass
 from datetime import date
 
@@ -9,12 +11,11 @@ from ...core.asset_class import AssetClass
 class EuropeanPut(BaseInstrument):
     """Vanilla European put option – exercise only at maturity."""
 
-    asset_class: AssetClass = AssetClass.EQUITY
-
     strike: float
     expiry: date
     underlying_ticker: str = "SPX"
     dividend_yield: float = 0.0
+    asset_class: AssetClass = AssetClass.EQUITY     # ← last position
 
     def __post_init__(self) -> None:
         if self.strike <= 0:
