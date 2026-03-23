@@ -1,4 +1,4 @@
-# src/quant_finance/instruments/equity/european_put.py
+# src/quant_finance/instruments/equity/forward.py
 
 from dataclasses import dataclass
 from datetime import date
@@ -8,8 +8,8 @@ from ...core.asset_class import AssetClass
 
 
 @dataclass(frozen=True)
-class EuropeanPut(BaseInstrument):
-    """European put option – exercise only at maturity."""
+class Forward(BaseInstrument):
+    """Equity forward contract – obligation to buy/sell underlying at fixed strike."""
 
     strike: float
     expiry: date
@@ -17,7 +17,7 @@ class EuropeanPut(BaseInstrument):
     dividend_yield: float = 0.0
     current_spot: float | None = None
     asset_class: AssetClass = AssetClass.EQUITY
-    contract_multiplier: int = 100
+    contract_multiplier: int = 1  # usually 1 for forwards (not 100 like options)
 
     def __post_init__(self) -> None:
         if self.strike <= 0:
@@ -26,20 +26,21 @@ class EuropeanPut(BaseInstrument):
             raise ValueError("Expiry must be in the future")
 
     def payoff(self, spot: float) -> float:
-        return max(self.strike - spot, 0.0)
+        """Long forward payoff: profit/loss at maturity."""
+        return spot - self.strike
 
     def is_path_dependent(self) -> bool:
         return False
 
-    def current_intrinsic(self) -> float:
-        """Current intrinsic value if we know spot price."""
+    def current_value(self) -> float:
+        """Current unrealized P&L if we know the spot price."""
         if self.current_spot is None:
             return 0.0
-        return max(self.strike - self.current_spot, 0.0)
+        return self.current_spot - self.strike
 
     def __repr__(self) -> str:
         return (
-            f"EuropeanPut({self.underlying_ticker!r}, "
+            f"Forward({self.underlying_ticker!r}, "
             f"K={self.strike:.2f}, T={self.expiry:%Y-%m-%d}, "
             f"q={self.dividend_yield:.2%})"
         )

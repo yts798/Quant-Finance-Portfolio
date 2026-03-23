@@ -15,7 +15,9 @@ class AmericanCall(BaseInstrument):
     expiry: date
     underlying_ticker: str = "SPX"
     dividend_yield: float = 0.0
-    asset_class: AssetClass = AssetClass.EQUITY     # ← last position
+    current_spot: float | None = None
+    asset_class: AssetClass = AssetClass.EQUITY
+    contract_multiplier: int = 100
 
     def __post_init__(self) -> None:
         if self.strike <= 0:
@@ -28,6 +30,12 @@ class AmericanCall(BaseInstrument):
 
     def is_path_dependent(self) -> bool:
         return True
+
+    def current_intrinsic(self) -> float:
+        """Current intrinsic value if we know spot price."""
+        if self.current_spot is None:
+            return 0.0
+        return max(self.current_spot - self.strike, 0.0)
 
     def __repr__(self) -> str:
         return (
