@@ -7,7 +7,9 @@ from quant_finance.instruments.equity import (
     EuropeanPut,
     AmericanCall,
     AmericanPut,
-    Forward
+    Forward,
+    DigitalCall,
+    DigitalPut
 )
 def main():
     expiry = date.today() + timedelta(days=60)
@@ -44,6 +46,39 @@ def main():
     print(f"  Spot 4300 → {fwd.payoff(4300):.2f}  (loss)")
     print(f"  Spot 4500 → {fwd.payoff(4500):.2f}  (breakeven)")
     print(f"  Spot 4700 → {fwd.payoff(4700):.2f}  (profit)\n")
+
+    dc = DigitalCall(
+        strike=4500.0,
+        expiry=next_month,
+        underlying_ticker="SPX",
+        cash_amount=100.0,
+        current_spot=4520.0,
+    )
+
+    dp = DigitalPut(
+        strike=4550.0,
+        expiry=next_month,
+        underlying_ticker="SPX",
+        cash_amount=100.0,
+        current_spot=4520.0,
+    )
+
+    print("=== Digital Options Test ===\n")
+
+    print("DigitalCall:")
+    print(f"  {dc}")
+    print(f"  Current payout: {dc.current_intrinsic():.2f}")
+    print(f"  Path dep?       {dc.is_path_dependent()}\n")
+
+    print("DigitalPut:")
+    print(f"  {dp}")
+    print(f"  Current payout: {dp.current_intrinsic():.2f}")
+    print(f"  Path dep?       {dp.is_path_dependent()}\n")
+
+    print("Payoff examples (at expiry):")
+    print(f"Spot 4300 → DC: {dc.payoff(4300):.2f} | DP: {dp.payoff(4300):.2f}")
+    print(f"Spot 4500 → DC: {dc.payoff(4500):.2f} | DP: {dp.payoff(4500):.2f}")
+    print(f"Spot 4600 → DC: {dc.payoff(4600):.2f} | DP: {dp.payoff(4600):.2f}")
 
 
 if __name__ == "__main__":

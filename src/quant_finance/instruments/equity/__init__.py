@@ -9,11 +9,15 @@ from .european_put import EuropeanPut
 from .american_call import AmericanCall
 from .american_put import AmericanPut
 from .forward import Forward
+from .digital_call import DigitalCall
+from .digital_put import DigitalPut
 
 __all__ = [
     "EuropeanCall",
     "EuropeanPut",
     "AmericanCall",
     "AmericanPut",
-    "Forward"
+    "Forward",
+    "DigitalCall",
+    "DigitalPut"
 ]
