@@ -9,7 +9,9 @@ from quant_finance.instruments.equity import (
     AmericanPut,
     Forward,
     DigitalCall,
-    DigitalPut
+    DigitalPut,
+    BarrierCall,
+    LookbackCall
 )
 def main():
     expiry = date.today() + timedelta(days=60)
@@ -25,6 +27,23 @@ def main():
         expiry=next_month,
         underlying_ticker="SPX",
         current_spot=4520.0,
+    )
+
+    # Barrier Call (Down-and-Out)
+    barrier_call = BarrierCall(
+        strike=4500.0,
+        barrier=4200.0,           # knocks out if spot hits 4200 or below
+        expiry=expiry,
+        underlying_ticker="SPX",
+        current_spot=spot,
+    )
+
+    # Lookback Call (Floating strike - uses max spot)
+    lookback_call = LookbackCall(
+        strike=4400.0,
+        expiry=expiry,
+        underlying_ticker="SPX",
+        current_spot=spot,
     )
 
 
@@ -79,6 +98,19 @@ def main():
     print(f"Spot 4300 → DC: {dc.payoff(4300):.2f} | DP: {dp.payoff(4300):.2f}")
     print(f"Spot 4500 → DC: {dc.payoff(4500):.2f} | DP: {dp.payoff(4500):.2f}")
     print(f"Spot 4600 → DC: {dc.payoff(4600):.2f} | DP: {dp.payoff(4600):.2f}")
+
+    for opt in [barrier_call, lookback_call]:
+        name = opt.__class__.__name__
+        print(f"{name}:")
+        print(f"  {opt}")
+        print(f"  Path dependent?   : {opt.is_path_dependent()}")
+        print(f"  Current intrinsic : {opt.current_intrinsic():.2f}")
+        print(f"  Payoff at spot    : {opt.payoff(spot):.2f}")
+        print()
+
+    print("Notes:")
+    print("• BarrierCall will pay 0 if barrier is hit during the life")
+    print("• LookbackCall payoff depends on the maximum spot reached")
 
 
 if __name__ == "__main__":

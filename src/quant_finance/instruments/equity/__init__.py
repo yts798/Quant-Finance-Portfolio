@@ -11,6 +11,8 @@ from .american_put import AmericanPut
 from .forward import Forward
 from .digital_call import DigitalCall
 from .digital_put import DigitalPut
+from .barrier_call import BarrierCall
+from .lookback_call import LookbackCall
 
 __all__ = [
     "EuropeanCall",
@@ -19,5 +21,7 @@ __all__ = [
     "AmericanPut",
     "Forward",
     "DigitalCall",
-    "DigitalPut"
+    "DigitalPut",
+    "BarrierCall",
+    "LookbackCall"
 ]
