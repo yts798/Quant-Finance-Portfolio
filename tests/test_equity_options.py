@@ -29,8 +29,7 @@ def main():
         current_spot=4520.0,
     )
 
-    # Barrier Call (Down-and-Out) test
-
+    # Barrier Call (Down-and-Out)
     barrier_call = BarrierCall(
         strike=4500.0,
         barrier=4200.0,           # knocks out if spot hits 4200 or below

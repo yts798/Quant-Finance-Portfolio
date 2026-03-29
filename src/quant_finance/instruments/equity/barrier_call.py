@@ -11,9 +11,10 @@ from ...core.asset_class import AssetClass
 class BarrierCall(BaseInstrument):
     """Down-and-Out Barrier Call – knocks out if spot hits barrier during life."""
 
+    barrier: float                    # knock-out level
     strike: float
     expiry: date
-    barrier: float                    # knock-out level
+
     underlying_ticker: str = "SPX"
     dividend_yield: float = 0.0
     current_spot: float | None = None
