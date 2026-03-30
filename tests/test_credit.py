@@ -82,7 +82,7 @@ def main():
     print("• Payer Option profits when credit spreads widen")
     print("• Receiver Option profits when credit spreads tighten")
     print("\nChange strike_spread or coupon → save → run again to see payoff changes.")
-
+    print()
 
 if __name__ == "__main__":
     main()
