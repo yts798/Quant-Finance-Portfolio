@@ -1,35 +1,38 @@
-# src/quant_finance/instruments/portfolio/position.py
+# src/quant_finance/instruments/portfolio/portfolio.py
 
-from dataclasses import dataclass
-from datetime import date
+from dataclasses import dataclass, field
+from typing import Dict, List
 
-from ..equity.equity import Equity
+from .position import Position
 
 
-@dataclass(frozen=True)
-class Position:
-    """Represents a single holding in a portfolio."""
+@dataclass
+class Portfolio:
+    """Portfolio containing multiple positions + cash."""
 
-    equity: Equity
-    quantity: float          # positive = long, negative = short
-    average_cost: float      # average purchase price
+    name: str = "My Portfolio"
+    positions: Dict[str, Position] = field(default_factory=dict)
+    cash: float = 0.0
 
-    def __post_init__(self) -> None:
-        if self.quantity == 0:
-            raise ValueError("Quantity cannot be zero")
+    def add_position(self, position: Position) -> None:
+        """Add or update a position."""
+        self.positions[position.equity.ticker] = position
 
-    def current_value(self) -> float:
-        """Current market value of this position."""
-        return self.quantity * self.equity.current_price
+    def total_value(self) -> float:
+        """Total portfolio value = cash + sum of all position values."""
+        positions_value = sum(pos.current_value() for pos in self.positions.values())
+        return self.cash + positions_value
 
-    def unrealized_pnl(self) -> float:
-        """Unrealized profit & loss."""
-        return self.current_value() - (self.quantity * self.average_cost)
+    def total_unrealized_pnl(self) -> float:
+        """Total unrealized profit & loss across all positions."""
+        return sum(pos.unrealized_pnl() for pos in self.positions.values())
 
     def __repr__(self) -> str:
         return (
-            f"Position({self.equity.ticker}, "
-            f"Qty={self.quantity:.0f}, "
-            f"AvgCost={self.average_cost:.2f}, "
-            f"Value={self.current_value():,.2f})"
+            f"Portfolio('{self.name}', "
+            f"Positions={len(self.positions)}, "
+            f"Cash=${self.cash:,.2f}, "
+            f"Total Value=${self.total_value():,.2f})"
         )
+    
+    
