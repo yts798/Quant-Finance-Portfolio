@@ -31,7 +31,7 @@ class Position:
         return (
             f"Position({self.equity.ticker}, "
             f"Qty={self.quantity:.0f}, "
-            f"AvgCost={self.average_cost:.3f}, "
+            f"AvgCost={self.average_cost:.2f}, "
             
             f"Value={self.current_value():,.2f})"
         )
