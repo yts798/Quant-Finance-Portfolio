@@ -19,7 +19,7 @@ class Portfolio:
         self.positions[position.equity.ticker] = position
 
     def total_value(self) -> float:
-        """Total portfolio value = cash + sum of all position values."""
+        """Total portfolio value = cash plus sum of all position values."""
         positions_value = sum(pos.current_value() for pos in self.positions.values())
         return self.cash + positions_value
 
