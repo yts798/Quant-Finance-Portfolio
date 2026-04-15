@@ -10,7 +10,10 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [{name = "Yutong", email = "your@email.com"}]
-dependencies = []
+dependencies = [
+    "yfinance>=0.2.0",
+    "pyarrow>=10.0.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/quant_finance"]
