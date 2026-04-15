@@ -1,117 +1,195 @@
-from datetime import date, timedelta
+# tests/test_equity_options.py
+"""Tests for Equity and Option instruments."""
 
-from quant_finance.core.base_instrument import BaseInstrument
-from quant_finance.core.asset_class import AssetClass
+from datetime import date
+
 from quant_finance.instruments.equity import (
+    Equity,
     EuropeanCall,
     EuropeanPut,
     AmericanCall,
-    AmericanPut,
-    Forward,
     DigitalCall,
     DigitalPut,
     BarrierCall,
-    LookbackCall
+    BarrierPut,
+    LookbackCall,
+    LookbackPut,
 )
-def main():
-    expiry = date.today() + timedelta(days=60)
-    spot = 4500.0
-    next_month = date.today() + timedelta(days=30)
-    print("=== Vanilla Options Test ===\n")
-    ap = AmericanPut(strike=4550, expiry=expiry, current_spot=spot)
-    ec = EuropeanCall(strike=4450, expiry=expiry, current_spot=spot)
-    ep = EuropeanPut(strike=4550, expiry=expiry, current_spot=spot)
-    ac = AmericanCall(strike=4450, expiry=expiry, current_spot=spot)
-    fwd = Forward(
-        strike=4500.0,
-        expiry=next_month,
-        underlying_ticker="SPX",
-        current_spot=4520.0,
-    )
-
-    # Barrier Call (Down-and-Out)
-    barrier_call = BarrierCall(
-        strike=4500.0,
-        barrier=4200.0,           # knocks out if spot hits 4200 or below
-        expiry=expiry,
-        underlying_ticker="SPX",
-        current_spot=spot,
-    )
-
-    # Lookback Call (Floating strike - uses max spot)
-    lookback_call = LookbackCall(
-        strike=4400.0,
-        expiry=expiry,
-        underlying_ticker="SPX",
-        current_spot=spot,
-    )
 
 
-    print(f"Spot price: {spot:.2f}\n")
+class TestEquity:
+    def test_equity_price_updates(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        assert aapl.current_price == 150.0
 
-    for opt in [ec, ep, ac, ap]:
-        print(f"{opt.__class__.__name__}:")
-        print(f"  {opt}")
-        print(f"  Intrinsic: {opt.current_intrinsic():.2f}")
-        print(f"  Path dep?  {opt.is_path_dependent()}")
-        print()
+        aapl.update_price(155.0)
+        assert aapl.current_price == 155.0
 
-    print("=== Equity Forward Test ===")
-    print(f"Object:          {fwd}")
-    print(f"Current value:   {fwd.current_value():.2f}")
-    print(f"Path dependent?  {fwd.is_path_dependent()}\n")
-
-    print("Payoff examples (at maturity):")
-    print(f"  Spot 4300 → {fwd.payoff(4300):.2f}  (loss)")
-    print(f"  Spot 4500 → {fwd.payoff(4500):.2f}  (breakeven)")
-    print(f"  Spot 4700 → {fwd.payoff(4700):.2f}  (profit)\n")
-
-    dc = DigitalCall(
-        strike=4500.0,
-        expiry=next_month,
-        underlying_ticker="SPX",
-        cash_amount=100.0,
-        current_spot=4520.0,
-    )
-
-    dp = DigitalPut(
-        strike=4550.0,
-        expiry=next_month,
-        underlying_ticker="SPX",
-        cash_amount=100.0,
-        current_spot=4520.0,
-    )
-
-    print("=== Digital Options Test ===\n")
-
-    print("DigitalCall:")
-    print(f"  {dc}")
-    print(f"  Current payout: {dc.current_intrinsic():.2f}")
-    print(f"  Path dep?       {dc.is_path_dependent()}\n")
-
-    print("DigitalPut:")
-    print(f"  {dp}")
-    print(f"  Current payout: {dp.current_intrinsic():.2f}")
-    print(f"  Path dep?       {dp.is_path_dependent()}\n")
-
-    print("Payoff examples (at expiry):")
-    print(f"Spot 4300 → DC: {dc.payoff(4300):.2f} | DP: {dp.payoff(4300):.2f}")
-    print(f"Spot 4500 → DC: {dc.payoff(4500):.2f} | DP: {dp.payoff(4500):.2f}")
-    print(f"Spot 4600 → DC: {dc.payoff(4600):.2f} | DP: {dp.payoff(4600):.2f}")
-
-    for opt in [barrier_call, lookback_call]:
-        name = opt.__class__.__name__
-        print(f"{name}:")
-        print(f"  {opt}")
-        print(f"  Path dependent?   : {opt.is_path_dependent()}")
-        print(f"  Current intrinsic : {opt.current_intrinsic():.2f}")
-        print(f"  Payoff at spot    : {opt.payoff(spot):.2f}")
-        print()
-
-    print("Notes:")
-    print("• BarrierCall will pay 0 if barrier is hit during the life")
-    print("• LookbackCall payoff depends on the maximum spot reached")
+    def test_equity_price_history(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        trade_date = date(2024, 1, 15)
+        aapl.update_price(new_price=155.0, as_of_date=trade_date)
+        assert aapl.get_historical_price(trade_date) == 150.0
+        assert aapl.current_price == 155.0
 
 
-if __name__ == "__main__":
-    main()
+class TestDigitalCall:
+    def test_itm_pays(self):
+        aapl = Equity(ticker="AAPL", current_price=160.0)
+        dc = DigitalCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15), cash_amount=100.0)
+        assert dc.current_intrinsic() == 100.0
+        assert dc.payoff(160.0) == 100.0
+
+    def test_otm_pays_zero(self):
+        aapl = Equity(ticker="AAPL", current_price=140.0)
+        dc = DigitalCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15), cash_amount=100.0)
+        assert dc.current_intrinsic() == 0.0
+        assert dc.payoff(140.0) == 0.0
+
+    def test_at_strike_is_zero(self):
+        aapl = Equity(ticker="AAPL", current_price=145.0)
+        dc = DigitalCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15), cash_amount=100.0)
+        # Digital call: spot > strike → pays; spot <= strike → 0
+        assert dc.payoff(145.0) == 0.0
+
+    def test_repr(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        dc = DigitalCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15), cash_amount=100.0)
+        assert "DigitalCall" in repr(dc)
+        assert "AAPL" in repr(dc)
+
+    def test_option_type_and_path_dep(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        dc = DigitalCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert dc.option_type() == "call"
+        assert dc.is_path_dependent is False
+        assert dc.requires_simulation() is False
+
+
+class TestDigitalPut:
+    def test_itm_pays(self):
+        aapl = Equity(ticker="AAPL", current_price=140.0)
+        dp = DigitalPut(equity=aapl, strike=145.0, expiry=date(2025, 6, 15), cash_amount=100.0)
+        assert dp.current_intrinsic() == 100.0
+        assert dp.payoff(140.0) == 100.0
+
+    def test_otm_pays_zero(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        dp = DigitalPut(equity=aapl, strike=145.0, expiry=date(2025, 6, 15), cash_amount=100.0)
+        assert dp.current_intrinsic() == 0.0
+        assert dp.payoff(150.0) == 0.0
+
+    def test_at_strike_is_zero(self):
+        aapl = Equity(ticker="AAPL", current_price=145.0)
+        dp = DigitalPut(equity=aapl, strike=145.0, expiry=date(2025, 6, 15), cash_amount=100.0)
+        # Digital put: spot < strike → pays; spot >= strike → 0
+        assert dp.payoff(145.0) == 0.0
+
+    def test_option_type_and_path_dep(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        dp = DigitalPut(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert dp.option_type() == "put"
+        assert dp.is_path_dependent is False
+        assert dp.requires_simulation() is False
+
+
+class TestVanillaOptions:
+    def test_european_call_intrinsic(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        call = EuropeanCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert call.current_intrinsic() == 500.0  # (150-145) * 1 * 100
+
+    def test_european_put_intrinsic(self):
+        aapl = Equity(ticker="AAPL", current_price=140.0)
+        put = EuropeanPut(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert put.current_intrinsic() == 500.0  # (145-140) * 1 * 100
+
+    def test_american_call_path_dependent(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        amc = AmericanCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert amc.is_path_dependent is True
+        assert amc.requires_simulation() is True
+
+    def test_european_call_not_path_dependent(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        ec = EuropeanCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert ec.is_path_dependent is False
+        assert ec.requires_simulation() is False
+
+    def test_put_payoff(self):
+        aapl = Equity(ticker="AAPL", current_price=140.0)
+        put = EuropeanPut(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert put.payoff(140.0) == 500.0  # (145-140)*100
+        assert put.payoff(150.0) == 0.0    # OTM
+
+    def test_call_payoff(self):
+        aapl = Equity(ticker="AAPL", current_price=160.0)
+        call = EuropeanCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert call.payoff(160.0) == 1500.0  # (160-145)*100
+        assert call.payoff(140.0) == 0.0     # OTM
+
+
+class TestExoticPlaceholders:
+    def test_barrier_call_repr(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        bc = BarrierCall(equity=aapl, strike=145.0, barrier=130.0, expiry=date(2025, 6, 15))
+        assert "BarrierCall" in repr(bc)
+        assert "AAPL" in repr(bc)
+
+    def test_barrier_put_repr(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        bp = BarrierPut(equity=aapl, strike=155.0, barrier=160.0, expiry=date(2025, 6, 15))
+        assert "BarrierPut" in repr(bp)
+
+    def test_lookback_call_repr(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        lc = LookbackCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert "LookbackCall" in repr(lc)
+
+    def test_lookback_put_repr(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        lp = LookbackPut(equity=aapl, strike=155.0, expiry=date(2025, 6, 15))
+        assert "LookbackPut" in repr(lp)
+
+    def test_barrier_is_path_dependent(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        bc = BarrierCall(equity=aapl, strike=145.0, barrier=130.0, expiry=date(2025, 6, 15))
+        assert bc.is_path_dependent is True
+        assert bc.requires_simulation() is True
+
+    def test_lookback_is_path_dependent(self):
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        lc = LookbackCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        assert lc.is_path_dependent is True
+        assert lc.requires_simulation() is True
+
+    def test_all_share_same_equity(self):
+        """All option types referencing same underlying share the same Equity object."""
+        aapl = Equity(ticker="AAPL", current_price=150.0)
+        opts = [
+            EuropeanCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15)),
+            EuropeanPut(equity=aapl, strike=155.0, expiry=date(2025, 6, 15)),
+            DigitalCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15)),
+            DigitalPut(equity=aapl, strike=155.0, expiry=date(2025, 6, 15)),
+            BarrierCall(equity=aapl, strike=145.0, barrier=130.0, expiry=date(2025, 6, 15)),
+            BarrierPut(equity=aapl, strike=155.0, barrier=160.0, expiry=date(2025, 6, 15)),
+            LookbackCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15)),
+            LookbackPut(equity=aapl, strike=155.0, expiry=date(2025, 6, 15)),
+        ]
+        for opt in opts:
+            assert opt.equity is aapl
+            assert opt.current_spot == 150.0
+
+    def test_price_update_propagates(self):
+        """Changing equity price updates all option intrinsics."""
+        aapl = Equity(ticker="AAPL", current_price=140.0)
+        call = EuropeanCall(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+        put = EuropeanPut(equity=aapl, strike=145.0, expiry=date(2025, 6, 15))
+
+        assert call.current_intrinsic() == 0.0  # OTM
+        assert put.current_intrinsic() == 500.0  # ITM
+
+        aapl.update_price(160.0)
+
+        assert call.current_intrinsic() == 1500.0  # now ITM
+        assert put.current_intrinsic() == 0.0       # now OTM

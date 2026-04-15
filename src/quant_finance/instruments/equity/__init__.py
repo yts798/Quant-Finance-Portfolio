@@ -1,27 +1,36 @@
 # src/quant_finance/instruments/equity/__init__.py
 """
 Makes equity a proper subpackage and enables clean imports like:
-    from quant_finance.instruments.equity import EuropeanCall
+    from quant_finance.instruments.equity import EuropeanCall, Equity
 """
 
-from .european_call import EuropeanCall
-from .european_put import EuropeanPut
-from .american_call import AmericanCall
-from .american_put import AmericanPut
-from .forward import Forward
-from .digital_call import DigitalCall
-from .digital_put import DigitalPut
-from .barrier_call import BarrierCall
-from .lookback_call import LookbackCall
+from .equity import Equity
+from .option import (
+    EuropeanCall,
+    EuropeanPut,
+    AmericanCall,
+    AmericanPut,
+    DigitalCall,
+    DigitalPut,
+    BarrierCall,
+    BarrierPut,
+    LookbackCall,
+    LookbackPut,
+)
+from .forward import Forward, ForwardSide
 
 __all__ = [
+    "Equity",
     "EuropeanCall",
     "EuropeanPut",
     "AmericanCall",
     "AmericanPut",
-    "Forward",
     "DigitalCall",
     "DigitalPut",
     "BarrierCall",
-    "LookbackCall"
+    "BarrierPut",
+    "LookbackCall",
+    "LookbackPut",
+    "Forward",
+    "ForwardSide",
 ]
