@@ -62,15 +62,23 @@ class DataLoader:
             start=start,
             end=end,
             progress=progress,
-            auto_adjust=False,  # keep adj_close column
+            auto_adjust=False,  # keep adj_close and close columns
         )
 
-        # yfinance returns a MultiIndex (Ticker, Date) when multiple tickers
+        # yfinance 1.2.x returns MultiIndex columns: (Price, Ticker) always,
+        # even for a single ticker. Extract per-ticker DataFrames.
         if isinstance(df.columns, pd.MultiIndex):
-            for ticker in tickers:
-                self._cache[ticker] = df[ticker].reset_index()
+            # Extract unique tickers from the second level of the MultiIndex
+            _, ticker_level = df.columns.names  # noqa: F841
+            tickers_found = df.columns.get_level_values(1).unique().tolist()
+
+            for ticker in tickers_found:
+                # Select all columns for this ticker: e.g. df['Close']['AAPL']
+                ticker_df = df.xs(ticker, level=1, axis=1).copy()
+                ticker_df = ticker_df.reset_index()
+                self._cache[ticker] = ticker_df
         else:
-            # Single ticker — df.columns is a simple Index
+            # Fallback for older yfinance versions (plain columns)
             self._cache[tickers[0]] = df.reset_index()
 
         return self._cache
@@ -93,20 +101,33 @@ class DataLoader:
             raise ValueError(f"No cached data for {ticker}. Call download() first.")
 
         df = self._cache[ticker]
-        bars = []
 
+        # Normalise yfinance column names → PriceBar field names
+        rename = {
+            "Date": "date",
+            "Open": "open_",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Adj Close": "adj_close",
+            "Volume": "volume",
+            "Dividends": "dividend",
+        }
+        df = df.rename(columns=rename)
+
+        bars = []
         for _, row in df.iterrows():
-            trade_date = row["Date"].date() if hasattr(row["Date"], "date") else row["Date"]
+            trade_date = row["date"].date() if hasattr(row["date"], "date") else row["date"]
 
             bar = PriceBar(
                 date=trade_date,
-                open_=float(row["Open"]),
-                high=float(row["High"]),
-                low=float(row["Low"]),
-                close=float(row["Close"]),
-                adj_close=float(row["Adj Close"]),
-                volume=float(row["Volume"]),
-                dividend=float(row.get("Dividends", 0.0)),
+                open_=float(row["open_"]),
+                high=float(row["high"]),
+                low=float(row["low"]),
+                close=float(row["close"]),
+                adj_close=float(row["adj_close"]),
+                volume=float(row["volume"]),
+                dividend=float(row.get("dividend", 0.0)),
             )
             bars.append(bar)
 
@@ -167,8 +188,23 @@ class DataLoader:
             raise ValueError(f"No cached data for {ticker}. Call download() first.")
 
         df = self._cache[ticker].copy()
-        df["date"] = pd.to_datetime(df["Date"]).dt.date
-        df = df.rename(columns={"Dividends": "dividend"})
+
+        # Normalise yfinance column names → parquet field names
+        rename = {
+            "Date": "date",
+            "Open": "open_",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Adj Close": "adj_close",
+            "Volume": "volume",
+            "Dividends": "dividend",
+        }
+        df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+        if "date" not in df.columns:
+            df["date"] = pd.to_datetime(df.index).date
+        df["dividend"] = df.get("dividend", 0.0)
+
         table = pa.Table.from_pandas(df[["date", "open_", "high", "low", "close", "adj_close", "volume", "dividend"]], schema=self.PARQUET_SCHEMA)
         pq.write_table(table, filepath, version="2.6")
 
