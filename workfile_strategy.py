@@ -141,14 +141,19 @@ class Backtester:
             )
 
             # 3. Execute signal → trade
-            executed = None
+            executed_trade: Trade | None = None
             if signal is not None and signal.side != self._position:
-                executed = self._execute(signal, d)
+                executed_trade = self._execute(signal, d)
 
             # 4. Record snapshot
             spy_price = self.equities["SPY"].current_price
-            sma_short = None
-            sma_long = None
+
+            trade_desc = ""
+            if executed_trade is not None:
+                trade_desc = (
+                    f"{executed_trade.side.value.upper()} "
+                    f"{executed_trade.quantity} @ ${executed_trade.price:.2f}"
+                )
 
             results.append(
                 {
@@ -163,8 +168,7 @@ class Backtester:
                     ),
                     "unrealised_pnl": self.portfolio.total_unrealized_pnl,
                     "realised_pnl": self.portfolio.total_realized_pnl,
-                    "trade": f"{executed.side.value} {executed.quantity} @ ${executed.price:.2f}"
-                    if executed else "",
+                    "trade": trade_desc,
                 }
             )
 
