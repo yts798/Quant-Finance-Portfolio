@@ -23,6 +23,7 @@ from pathlib import Path
 from quant_finance.data import DataLoader, DataStore
 from quant_finance.instruments.equity import Equity
 from quant_finance.instruments.portfolio import Portfolio, Trade, TradeSide
+from quant_finance.strategies import RiskReport
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -336,31 +337,40 @@ if __name__ == "__main__":
         )
 
     # ── Performance summary ────────────────────────────────────────────────────
+    # Compute SPY buy-hold daily returns for benchmark comparison
+    spy_prices = [r["spy_price"] for r in results]
+    benchmark_daily_returns = [
+        (spy_prices[i] - spy_prices[i - 1]) / spy_prices[i - 1]
+        for i in range(1, len(spy_prices))
+    ]
+
+    # Strategy daily returns
+    navs = [r["nav"] for r in results]
+    strategy_daily_returns = [
+        (navs[i] - navs[i - 1]) / navs[i - 1]
+        for i in range(1, len(navs))
+    ]
+
+    # Build risk report
+    report = RiskReport.from_results(
+        results=results,
+        strategy_name=f"MA Crossover SMA20/50 on {TICKER}",
+        benchmark_returns=benchmark_daily_returns,
+        risk_free_rate=0.042,  # 4.2% annual T-bill rate
+    )
+
+    trades = [r for r in results if r["trade"]]
     first = results[0]
     last = results[-1]
 
-    total_return = (last["nav"] - first["nav"]) / first["nav"] * 100
-    spy_ret = (last["spy_price"] - first["spy_price"]) / first["spy_price"] * 100
-
-    trades = [r for r in results if r["trade"]]
-    wins = sum(1 for r in results if "BUY" in r["trade"] or "SELL" in r["trade"])
-
-    print("\n[5] Performance Summary")
+    print("\n[5] Risk & Performance Report")
     print("=" * 65)
-    print(f"  Strategy        : MA Crossover (SMA20 / SMA50) on {TICKER}")
-    print(f"  Period          : {first['date']} -> {last['date']}")
-    print(f"  Trading days    : {len(results)}")
+    s = report.summary()
+    for key, value in s.items():
+        print(f"  {key:<30} {value}")
+    print()
     print(f"  Total trades    : {len(trades)}")
-    print(f"  Start NAV       : ${first['nav']:,.2f}")
-    print(f"  End NAV         : ${last['nav']:,.2f}")
-    print(f"  Strategy return : {total_return:.2f}%")
-    print(f"  SPY buy-hold    : {spy_ret:.2f}%")
-    print(f"  Alpha           : {total_return - spy_ret:.2f}%")
     print(f"  Max unreal. P&L : ${max(r['unrealised_pnl'] for r in results):,.2f}")
     print(f"  Min unreal. P&L : ${min(r['unrealised_pnl'] for r in results):,.2f}")
-    print()
-    s = portfolio.summary()
-    for k, v in s.items():
-        print(f"  {k}: {v}")
 
     print("\nDone.")

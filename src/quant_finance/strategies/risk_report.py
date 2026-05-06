@@ -174,8 +174,8 @@ class RiskReport:
         tracking_err = None
         bench_return_pct = None
         if bench_rets is not None and len(bench_rets) == len(daily_returns):
-            bench_return_pct = (sum(bench_rets) / len(bench_rets)) * 100  # avg daily
-            alpha = total_return - sum(bench_rets) / len(bench_rets)
+            bench_return_pct = sum(bench_rets) * 100  # cumulative return
+            alpha = total_return - sum(bench_rets)  # compare cumulative returns
             # Tracking error
             diffs = [daily_returns[i] - bench_rets[i] for i in range(len(daily_returns))]
             te = math.sqrt(sum(d ** 2 for d in diffs) / len(diffs)) * math.sqrt(252) if diffs else 0.0
