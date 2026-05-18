@@ -28,8 +28,9 @@ class RiskReport:
     # ── Return metrics ──────────────────────────────────────────────────────
     total_return_pct: float       # simple return %
     annualized_return_pct: float  # CAGR %
-    sharpe_ratio: float          # annualized (daily ret mean / ret std * sqrt(252))
     sortino_ratio: float          # (mean - target) / downside_std * sqrt(252), target=0
+    sharpe_ratio: float          # annualized (daily ret mean / ret std * sqrt(252))
+   
 
     # ── Drawdown metrics ─────────────────────────────────────────────────────
     max_drawdown_pct: float       # peak-to-trough max %
