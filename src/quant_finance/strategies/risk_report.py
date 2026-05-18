@@ -20,9 +20,10 @@ class RiskReport:
     strategy_name: str
     start_date: date
     end_date: date
-    trading_days: int
     start_nav: float
     end_nav: float
+    trading_days: int
+
 
     # ── Return metrics ──────────────────────────────────────────────────────
     total_return_pct: float       # simple return %
