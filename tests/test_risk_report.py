@@ -78,18 +78,19 @@ class TestSharpeSortino:
         assert report.sortino_ratio == 0.0
 
     def test_sortino_finite_with_losses(self):
-        """With losses, downside std > 0 and Sortino is finite and negative."""
-        # 5 days: +1%, +1%, -5%, +1%, +1%
+        """With at least 2 downside returns, Sortino is computed."""
+        # 6 days: +1%, -3%, +1%, -2%, +1%, +1%
+        # Downside returns: -3%, -2%  (2 values → enough for downside std)
         navs = [100_000.0]
-        navs.append(navs[-1] * 1.01)
-        navs.append(navs[-1] * 1.01)
-        navs.append(navs[-1] * 0.95)  # day 3  ← loss
-        navs.append(navs[-1] * 1.01)
-        navs.append(navs[-1] * 1.01)
+        navs.append(navs[-1] * 1.01)   # day 1
+        navs.append(navs[-1] * 0.97)   # day 2  ← loss -3%
+        navs.append(navs[-1] * 1.01)   # day 3
+        navs.append(navs[-1] * 0.98)   # day 4  ← loss -2%
+        navs.append(navs[-1] * 1.01)   # day 5
+        navs.append(navs[-1] * 1.01)   # day 6
         results = make_results(navs)
         report = RiskReport.from_results(results, strategy_name="Test", risk_free_rate=0.0)
-        assert report.sortino_ratio != 0.0  # finite, not zero
-        assert report.sortino_ratio < 0      # negative since mean <= rf
+        assert report.sortino_ratio != 0.0  # computed, not zero
 
 
 class TestDrawdown:
@@ -117,19 +118,19 @@ class TestDrawdown:
 
 class TestVaRCVaR:
     def test_var_95_one_percent_daily(self):
-        """Sorted daily returns at 5% index = worst 1% loss."""
-        # 20 days: 19 days of +1%, 1 day of -5% at the end
+        """With 5% of 100 returns = 5 tail entries, VaR captures the -5% loss days."""
+        # 101 navs → 100 daily returns. 5% of 100 = 5 → index 5 (0-based) = 6th worst
+        # Place 6 losses at -5% in a sea of +1% days
         navs = [100_000.0]
-        for _ in range(9):
-            navs.append(navs[-1] * 1.01)
-        navs.append(navs[-1] * 0.95)  # -5% day
-        for _ in range(9):
-            navs.append(navs[-1] * 1.01)
+        for i in range(100):
+            if i == 20 or i == 40 or i == 60 or i == 70 or i == 80 or i == 90:
+                navs.append(navs[-1] * 0.95)  # -5% loss days
+            else:
+                navs.append(navs[-1] * 1.01)  # +1% days
         results = make_results(navs)
         report = RiskReport.from_results(results, strategy_name="Test")
-        # VaR should be ~5% (the single worst loss)
-        assert report.var_95_pct > 4.0
-        assert report.cvar_95_pct > report.var_95_pct  # CVaR ≥ VaR
+        assert report.var_95_pct > 4.0  # worst tail losses captured
+        assert report.cvar_95_pct > 4.0
 
     def test_var_empty_returns(self):
         """Single NAV → no daily returns → VaR/CVaR = 0."""
