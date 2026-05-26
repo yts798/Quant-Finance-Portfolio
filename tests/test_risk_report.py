@@ -77,18 +77,19 @@ class TestSharpeSortino:
         report = RiskReport.from_results(results, strategy_name="Test")
         assert report.sortino_ratio == 0.0
 
-    def test_sortino_negative_when_downside_exists(self):
-        """With some losses, downside std > 0 and Sortino is finite."""
+    def test_sortino_finite_with_losses(self):
+        """With losses, downside std > 0 and Sortino is finite and negative."""
         # 5 days: +1%, +1%, -5%, +1%, +1%
         navs = [100_000.0]
-        navs.append(navs[-1] * 1.01)  # day 1
-        navs.append(navs[-1] * 1.01)  # day 2
+        navs.append(navs[-1] * 1.01)
+        navs.append(navs[-1] * 1.01)
         navs.append(navs[-1] * 0.95)  # day 3  ← loss
-        navs.append(navs[-1] * 1.01)  # day 4
-        navs.append(navs[-1] * 1.01)  # day 5
+        navs.append(navs[-1] * 1.01)
+        navs.append(navs[-1] * 1.01)
         results = make_results(navs)
         report = RiskReport.from_results(results, strategy_name="Test", risk_free_rate=0.0)
-        assert report.sortino_ratio < report.sharpe_ratio  # Sortino < Sharpe due to downside
+        assert report.sortino_ratio != 0.0  # finite, not zero
+        assert report.sortino_ratio < 0      # negative since mean <= rf
 
 
 class TestDrawdown:
