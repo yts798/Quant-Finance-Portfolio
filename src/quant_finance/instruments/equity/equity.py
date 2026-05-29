@@ -37,7 +37,7 @@ class Equity(BaseInstrument):
         self.current_price = new_price
 
     def get_historical_price(self, trade_date: date) -> Optional[float]:
-        """Retrieve a historical price for a given date."""
+        """Retrieve historical price for a given date."""
         return self.price_history.get(trade_date)
 
     def payoff(self, spot: float) -> float:
