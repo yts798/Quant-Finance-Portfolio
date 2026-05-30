@@ -13,6 +13,7 @@ authors = [{name = "Yutong", email = "your@email.com"}]
 dependencies = [
     "yfinance>=0.2.0",
     "pyarrow>=10.0.0",
+    "matplotlib>=3.7.0",
 ]
 
 [tool.hatch.build.targets.wheel]
