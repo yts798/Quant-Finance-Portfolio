@@ -3,7 +3,13 @@
 from .charts import ChartConfig, prepare_nav_data, prepare_price_data, prepare_drawdown_data
 from .nav_chart import plot_nav
 from .price_chart import plot_price
-from .risk_chart import plot_drawdown, plot_returns_hist
+from .risk_chart import (
+    plot_drawdown,
+    plot_returns_hist,
+    plot_rolling_sharpe,
+    plot_rolling_volatility,
+    plot_rolling_drawdown,
+)
 
 __all__ = [
     "ChartConfig",
@@ -14,4 +20,7 @@ __all__ = [
     "plot_price",
     "plot_drawdown",
     "plot_returns_hist",
+    "plot_rolling_sharpe",
+    "plot_rolling_volatility",
+    "plot_rolling_drawdown",
 ]

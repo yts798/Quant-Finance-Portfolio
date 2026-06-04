@@ -30,6 +30,9 @@ from quant_finance.visualization import (
     plot_price,
     plot_drawdown,
     plot_returns_hist,
+    plot_rolling_sharpe,
+    plot_rolling_volatility,
+    plot_rolling_drawdown,
     ChartConfig,
 )
 
@@ -151,6 +154,24 @@ fig_hist = plot_returns_hist(navs, config=hist_cfg, bins=40)
 fig_hist.savefig(OUTPUT_DIR / "returns_hist.png", dpi=150)
 print("  Saved: output/returns_hist.png")
 
+# 6. Rolling Sharpe
+fig_rs = plot_rolling_sharpe(navs, window=20, risk_free_rate=0.042,
+                              config=ChartConfig(title="Rolling Sharpe (20-day)", ylabel="Sharpe"))
+fig_rs.savefig(OUTPUT_DIR / "rolling_sharpe.png", dpi=150)
+print("  Saved: output/rolling_sharpe.png")
+
+# 7. Rolling Volatility
+fig_rv = plot_rolling_volatility(navs, window=20,
+                                  config=ChartConfig(title="Rolling Volatility (20-day)", ylabel="Vol (%)"))
+fig_rv.savefig(OUTPUT_DIR / "rolling_volatility.png", dpi=150)
+print("  Saved: output/rolling_volatility.png")
+
+# 8. Rolling Max Drawdown
+fig_rd = plot_rolling_drawdown(navs, window=20,
+                               config=ChartConfig(title="Rolling Max Drawdown (20-day)", ylabel="Max DD (%)"))
+fig_rd.savefig(OUTPUT_DIR / "rolling_drawdown.png", dpi=150)
+print("  Saved: output/rolling_drawdown.png")
+
 # ── Print summary ─────────────────────────────────────────────────────────────
 print("\nRisk Report")
 print("=" * 50)
@@ -164,4 +185,7 @@ print("  - price_chart.png")
 print("  - candlestick_chart.png")
 print("  - drawdown_chart.png")
 print("  - returns_hist.png")
+print("  - rolling_sharpe.png")
+print("  - rolling_volatility.png")
+print("  - rolling_drawdown.png")
 print("\nDone.")
