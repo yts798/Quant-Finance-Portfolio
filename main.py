@@ -142,7 +142,7 @@ def run_test_case(test: TestCase) -> None:
             print(f"{name:12} ERROR: {str(e)}")
 
     # Quick convergence check for binomial
-    if "Binomial50" in results and "Binomial200" in results and "Binomial1000" in results:
+    if "Binomial50" in results and "Binomial200" in results and  "Binomial1000" in results:
         conv_50_200 = abs(results["Binomial50"] - results["Binomial200"])
         conv_200_1000 = abs(results["Binomial200"] - results["Binomial1000"])
         print(f"  Convergence: |50-200| = {conv_50_200:.6f}   |200-1000| = {conv_200_1000:.6f}")
